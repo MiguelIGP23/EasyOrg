@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 11 - Simulacion y estadisticas
+Fase completada: 12 - Motor de copia
 Commit: pending
-Tests: 64 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 12 - Motor de copia
+Tests: 70 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 13 - Movimiento seguro
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

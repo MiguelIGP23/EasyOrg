@@ -10,5 +10,14 @@ readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "MiguelIGP23" }]
 
+[project.scripts]
+easyorg = "easyorg.cli.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

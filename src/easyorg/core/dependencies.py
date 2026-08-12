@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -85,22 +86,29 @@ class ExifToolResolver:
 
     def _portable_executable(self) -> Path | None:
         candidates = []
-        tools_root = self._project_root / "tools" / "exiftool"
+        runtime_roots = [self._project_root]
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            runtime_roots.insert(0, Path(meipass))
 
-        if is_windows():
-            candidates.extend(
-                [
-                    tools_root / "exiftool.exe",
-                    tools_root / "exiftool(-k).exe",
-                ]
-            )
-        else:
-            candidates.extend(
-                [
-                    tools_root / "exiftool",
-                    tools_root / "bin" / "exiftool",
-                ]
-            )
+        for runtime_root in runtime_roots:
+            tools_root = runtime_root / "tools" / "exiftool"
+            if is_windows():
+                candidates.extend(
+                    [
+                        tools_root / "exiftool.exe",
+                        tools_root / "exiftool(-k).exe",
+                        tools_root / "windows" / "exiftool.exe",
+                    ]
+                )
+            else:
+                candidates.extend(
+                    [
+                        tools_root / "exiftool",
+                        tools_root / "bin" / "exiftool",
+                        tools_root / "linux" / "exiftool",
+                    ]
+                )
 
         for candidate in candidates:
             if candidate.is_file():

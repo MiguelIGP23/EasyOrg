@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 21 - Gestion de eliminacion tras COPY
+Fase completada: 25 - Packaging Linux
 Commit: pending
-Tests: 84 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 22 - ExifTool portable Linux
+Tests: 85 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 26 - Suite de integracion
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

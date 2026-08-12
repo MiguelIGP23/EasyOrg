@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 3 - Validacion de rutas
+Fase completada: 4 - Scanner multimedia
 Commit: pending
-Tests: 24 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 4 - Scanner multimedia
+Tests: 28 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 5 - Parser de fechas en nombres
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

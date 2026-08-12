@@ -16,7 +16,7 @@ def test_module_entrypoint_outputs_name() -> None:
     env["PYTHONPATH"] = src_path if not env.get("PYTHONPATH") else f"{src_path}{os.pathsep}{env['PYTHONPATH']}"
 
     result = subprocess.run(
-        [sys.executable, "-m", "easyorg"],
+        [sys.executable, "-m", "easyorg", "--version"],
         capture_output=True,
         text=True,
         check=False,
@@ -24,4 +24,4 @@ def test_module_entrypoint_outputs_name() -> None:
     )
 
     assert result.returncode == 0
-    assert result.stdout.strip() == "easyOrg"
+    assert result.stdout.strip() == "easyOrg 0.1.0"

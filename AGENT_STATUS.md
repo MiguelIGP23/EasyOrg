@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 15 - Eventos y progreso
+Fase completada: 17 - End-to-end CLI
 Commit: pending
-Tests: 77 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 16 - CLI completo
+Tests: 82 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 18 - GUI base
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

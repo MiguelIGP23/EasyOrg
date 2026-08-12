@@ -97,3 +97,93 @@ def test_read_batch_marks_missing_records_as_errors() -> None:
     records = reader.read_batch(requested)
 
     assert records[Path("missing.jpg")].error == "No metadata returned by ExifTool."
+
+
+def test_read_batch_splits_large_requests_into_multiple_commands() -> None:
+    files = [Path(f"nested\\file_{index:03}.jpg") for index in range(5)]
+    commands: list[list[str]] = []
+
+    def fake_run(command, **kwargs) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        payload = [{"SourceFile": path, "DateTimeOriginal": "2024:01:01 10:00:00"} for path in command[7:]]
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=0,
+            stdout=json.dumps(payload),
+            stderr="",
+        )
+
+    reader = ExifToolMetadataReader(Path("exiftool"), run_command=fake_run)
+    reader.MAX_BATCH_SIZE = 2
+
+    records = reader.read_batch(files)
+
+    assert len(commands) == 3
+    assert all(file_path in records for file_path in files)
+
+
+def test_read_batch_falls_back_to_smaller_batches_when_one_batch_fails() -> None:
+    files = [Path("a.jpg"), Path("b.jpg"), Path("c.jpg"), Path("d.jpg")]
+    commands: list[list[str]] = []
+
+    def fake_run(command, **kwargs) -> subprocess.CompletedProcess[str]:
+        commands.append(command)
+        requested_paths = [Path(path) for path in command[7:]]
+        if len(requested_paths) > 1:
+            raise OSError("command line too long")
+
+        payload = [{"SourceFile": str(requested_paths[0]), "DateTimeOriginal": "2024:01:01 10:00:00"}]
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=0,
+            stdout=json.dumps(payload),
+            stderr="",
+        )
+
+    reader = ExifToolMetadataReader(Path("exiftool"), run_command=fake_run)
+    reader.MAX_BATCH_SIZE = 10
+
+    records = reader.read_batch(files)
+
+    assert len(commands) >= 3
+    assert all(file_path in records for file_path in files)
+
+
+def test_read_batch_accepts_non_zero_exit_when_exiftool_returns_json() -> None:
+    files = [Path("warning.jpg")]
+    payload = [{"SourceFile": "warning.jpg", "Error": "Minor warning"}]
+
+    def fake_run(command, **kwargs) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=1,
+            stdout=json.dumps(payload),
+            stderr="minor warning",
+        )
+
+    reader = ExifToolMetadataReader(Path("exiftool"), run_command=fake_run)
+
+    records = reader.read_batch(files)
+
+    assert records[Path("warning.jpg")].error == "Minor warning"
+
+
+def test_read_batch_raises_clean_error_when_exiftool_fails_without_json() -> None:
+    files = [Path("broken.jpg")]
+
+    def fake_run(command, **kwargs) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=1,
+            stdout="",
+            stderr="fatal error",
+        )
+
+    reader = ExifToolMetadataReader(Path("exiftool"), run_command=fake_run)
+
+    try:
+        reader.read_batch(files)
+    except RuntimeError as exc:
+        assert "fatal error" in str(exc)
+    else:
+        raise AssertionError("Expected RuntimeError")

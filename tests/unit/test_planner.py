@@ -112,6 +112,34 @@ def test_build_organization_plan_resolves_name_collisions_deterministically(tmp_
     assert [operation.collision_resolved for operation in plan.operations] == [False, True, True]
 
 
+def test_build_organization_plan_avoids_existing_destination_files(tmp_path: Path, monkeypatch) -> None:
+    base_directory = tmp_path / "easyOrg_2026-08-12"
+    existing_directory = base_directory / "2024" / "03 - Marzo"
+    existing_directory.mkdir(parents=True)
+    (existing_directory / "photo.jpg").write_bytes(b"existing")
+    monkeypatch.setattr("easyorg.core.planner.build_output_directory_name", lambda parent, run_date: base_directory)
+
+    media_files = [
+        MediaFile(
+            source_path=Path("C:/media/photo.jpg"),
+            media_type=MediaType.IMAGE,
+            size_bytes=10,
+            capture_date=datetime(2024, 3, 18, 12, 0, 0),
+            date_source=DateSource.METADATA_PRIMARY,
+        )
+    ]
+
+    plan = build_organization_plan(
+        media_files=media_files,
+        destination_parent_directory=tmp_path,
+        operation_mode=OperationMode.COPY,
+        organization_mode=OrganizationMode.YEAR_MONTH,
+        run_date=date(2026, 8, 12),
+    )
+
+    assert plan.operations[0].destination_path.name == "photo_2.jpg"
+
+
 def test_summarize_plan_reports_counts_and_available_space(
     tmp_path: Path,
     monkeypatch,

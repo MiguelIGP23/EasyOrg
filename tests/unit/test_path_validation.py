@@ -24,7 +24,7 @@ def test_validate_source_and_destination_returns_resolved_paths(tmp_path: Path) 
 
 
 def test_validate_source_and_destination_rejects_same_directory(tmp_path: Path) -> None:
-    with pytest.raises(PathValidationError, match="same directory"):
+    with pytest.raises(PathValidationError, match="no pueden ser la misma"):
         validate_source_and_destination(tmp_path, tmp_path)
 
 
@@ -34,7 +34,7 @@ def test_validate_source_and_destination_rejects_destination_inside_source(tmp_p
     source.mkdir()
     destination.mkdir()
 
-    with pytest.raises(PathValidationError, match="destination cannot be inside source"):
+    with pytest.raises(PathValidationError, match="destino no puede estar dentro"):
         validate_source_and_destination(source, destination)
 
 
@@ -44,7 +44,7 @@ def test_validate_source_and_destination_rejects_source_inside_destination(tmp_p
     destination.mkdir()
     source.mkdir()
 
-    with pytest.raises(PathValidationError, match="source cannot be inside destination"):
+    with pytest.raises(PathValidationError, match="origen no puede estar dentro"):
         validate_source_and_destination(source, destination)
 
 
@@ -53,7 +53,7 @@ def test_validate_source_and_destination_requires_existing_directories(tmp_path:
     destination = tmp_path / "destination"
     source.mkdir()
 
-    with pytest.raises(PathValidationError, match="destination directory does not exist"):
+    with pytest.raises(PathValidationError, match="destino no existe"):
         validate_source_and_destination(source, destination)
 
 
@@ -74,7 +74,7 @@ def test_validate_source_and_destination_requires_source_read_access(
 
     monkeypatch.setattr("easyorg.core.validator.os.access", fake_access)
 
-    with pytest.raises(PathValidationError, match="not readable"):
+    with pytest.raises(PathValidationError, match="No se puede leer"):
         validate_source_and_destination(source, destination)
 
 
@@ -95,5 +95,5 @@ def test_validate_source_and_destination_requires_destination_write_access(
 
     monkeypatch.setattr("easyorg.core.validator.os.access", fake_access)
 
-    with pytest.raises(PathValidationError, match="not writable"):
+    with pytest.raises(PathValidationError, match="No se puede escribir"):
         validate_source_and_destination(source, destination)

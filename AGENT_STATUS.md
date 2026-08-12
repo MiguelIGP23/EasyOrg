@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 8 - Lectura de metadatos ExifTool
+Fase completada: 9 - DateResolver
 Commit: pending
-Tests: 52 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 9 - DateResolver
+Tests: 58 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 10 - Planner
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

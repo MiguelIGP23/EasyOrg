@@ -1,10 +1,10 @@
 # AGENT STATUS
 
-Fase completada: 0 - Inspeccion y preparacion Git
+Fase completada: 1 - Bootstrap del proyecto
 Commit: pending
-Tests: baseline sin tests ejecutables; pytest no instalado en el entorno local
-Siguiente: 1 - Bootstrap del proyecto
+Tests: 2 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 2 - Modelos y utilidades
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
-- El repositorio local no tenia commits iniciales.
+- Fase 0 registrada en Git con commit b07b2bb.
 - Existen archivos locales de IDE sin commitear y deben permanecer fuera de los commits del proyecto.

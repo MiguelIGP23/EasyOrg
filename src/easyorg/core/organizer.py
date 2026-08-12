@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from easyorg.core.cancel import CancellationToken, OperationCancelled
 from easyorg.core.models import OperationResult, PlannedOperation
 
 
@@ -47,8 +48,20 @@ class CopyEngine:
             message=message,
         )
 
-    def copy_operations(self, operations: list[PlannedOperation]) -> tuple[OperationResult, ...]:
-        return tuple(self.copy_operation(operation) for operation in operations)
+    def copy_operations(
+        self,
+        operations: list[PlannedOperation],
+        cancellation_token: CancellationToken | None = None,
+    ) -> tuple[OperationResult, ...]:
+        results: list[OperationResult] = []
+        for operation in operations:
+            if cancellation_token is not None:
+                try:
+                    cancellation_token.raise_if_cancelled()
+                except OperationCancelled:
+                    break
+            results.append(self.copy_operation(operation))
+        return tuple(results)
 
 
 @dataclass
@@ -78,5 +91,17 @@ class MoveEngine:
             message="",
         )
 
-    def move_operations(self, operations: list[PlannedOperation]) -> tuple[OperationResult, ...]:
-        return tuple(self.move_operation(operation) for operation in operations)
+    def move_operations(
+        self,
+        operations: list[PlannedOperation],
+        cancellation_token: CancellationToken | None = None,
+    ) -> tuple[OperationResult, ...]:
+        results: list[OperationResult] = []
+        for operation in operations:
+            if cancellation_token is not None:
+                try:
+                    cancellation_token.raise_if_cancelled()
+                except OperationCancelled:
+                    break
+            results.append(self.move_operation(operation))
+        return tuple(results)

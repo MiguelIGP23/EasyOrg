@@ -1,9 +1,9 @@
 # AGENT STATUS
 
-Fase completada: 13 - Movimiento seguro
+Fase completada: 14 - Cancelacion
 Commit: pending
-Tests: 73 passed (.venv\Scripts\python.exe -m pytest)
-Siguiente: 14 - Cancelacion
+Tests: 75 passed (.venv\Scripts\python.exe -m pytest)
+Siguiente: 15 - Eventos y progreso
 Problemas conocidos:
 - No hay acceso real desde esta sesion al porcentaje restante de cuota Codex.
 - Fase 0 registrada en Git con commit b07b2bb.

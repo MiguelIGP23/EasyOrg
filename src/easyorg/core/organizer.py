@@ -49,3 +49,34 @@ class CopyEngine:
 
     def copy_operations(self, operations: list[PlannedOperation]) -> tuple[OperationResult, ...]:
         return tuple(self.copy_operation(operation) for operation in operations)
+
+
+@dataclass
+class MoveEngine:
+    copy_engine: CopyEngine
+    delete_function: Callable[[Path], None] = Path.unlink
+
+    def move_operation(self, operation: PlannedOperation) -> OperationResult:
+        copy_result = self.copy_engine.copy_operation(operation)
+        if not copy_result.success:
+            return copy_result
+
+        try:
+            self.delete_function(operation.source_path)
+        except OSError as exc:
+            return OperationResult(
+                source_path=operation.source_path,
+                destination_path=operation.destination_path,
+                success=False,
+                message=str(exc),
+            )
+
+        return OperationResult(
+            source_path=operation.source_path,
+            destination_path=operation.destination_path,
+            success=True,
+            message="",
+        )
+
+    def move_operations(self, operations: list[PlannedOperation]) -> tuple[OperationResult, ...]:
+        return tuple(self.move_operation(operation) for operation in operations)

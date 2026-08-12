@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -8,13 +7,14 @@ from pathlib import Path
 
 def main() -> int:
     project_root = Path(__file__).resolve().parents[1]
-    pyinstaller = shutil.which("pyinstaller")
-    if pyinstaller is None:
-        print("PyInstaller no esta instalado en el entorno actual.")
-        return 1
+    spec_path = project_root / "easyOrg.spec"
+    if spec_path.exists():
+        spec_path.unlink()
 
     command = [
-        pyinstaller,
+        sys.executable,
+        "-m",
+        "PyInstaller",
         "--noconfirm",
         "--clean",
         "--windowed",

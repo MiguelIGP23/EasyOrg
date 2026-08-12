@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
+import shutil
 
 from easyorg.core.models import (
     DateSource,
@@ -11,6 +12,7 @@ from easyorg.core.models import (
     OrganizationMode,
     OrganizationPlan,
     PlannedOperation,
+    SimulationSummary,
 )
 from easyorg.core.paths import build_output_directory_name
 from easyorg.utils.dates import month_folder_name, week_of_month
@@ -44,6 +46,7 @@ def build_organization_plan(
                 size_bytes=media_file.size_bytes,
                 capture_date=media_file.capture_date,
                 date_source=media_file.date_source,
+                collision_resolved=target_path.name != media_file.source_path.name,
             )
         )
 
@@ -52,6 +55,41 @@ def build_organization_plan(
         mode=operation_mode,
         organization_mode=organization_mode,
         operations=tuple(planned_operations),
+    )
+
+
+def summarize_plan(plan: OrganizationPlan) -> SimulationSummary:
+    total_files = len(plan.operations)
+    image_files = sum(1 for operation in plan.operations if operation.media_type.value == "image")
+    video_files = sum(1 for operation in plan.operations if operation.media_type.value == "video")
+    metadata_files = sum(
+        1
+        for operation in plan.operations
+        if operation.date_source in {DateSource.METADATA_PRIMARY, DateSource.METADATA_SECONDARY}
+    )
+    filename_files = sum(1 for operation in plan.operations if operation.date_source is DateSource.FILENAME)
+    filesystem_files = sum(
+        1
+        for operation in plan.operations
+        if operation.date_source in {DateSource.FILESYSTEM_MODIFICATION, DateSource.FILESYSTEM_CREATION}
+    )
+    undated_files = sum(1 for operation in plan.operations if operation.date_source is DateSource.NONE)
+    collision_files = sum(1 for operation in plan.operations if operation.collision_resolved)
+    total_bytes = sum(operation.size_bytes for operation in plan.operations)
+    available_bytes = shutil.disk_usage(plan.base_directory.parent).free
+
+    return SimulationSummary(
+        total_files=total_files,
+        image_files=image_files,
+        video_files=video_files,
+        metadata_files=metadata_files,
+        filename_files=filename_files,
+        filesystem_files=filesystem_files,
+        undated_files=undated_files,
+        collision_files=collision_files,
+        total_bytes=total_bytes,
+        available_bytes=available_bytes,
+        has_enough_space=available_bytes >= total_bytes,
     )
 
 

@@ -48,6 +48,7 @@ class PlannedOperation:
     size_bytes: int
     capture_date: datetime | None
     date_source: DateSource
+    collision_resolved: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,3 +74,17 @@ class OrganizationPlan:
     organization_mode: OrganizationMode
     operations: tuple[PlannedOperation, ...] = field(default_factory=tuple)
 
+
+@dataclass(frozen=True)
+class SimulationSummary:
+    total_files: int
+    image_files: int
+    video_files: int
+    metadata_files: int
+    filename_files: int
+    filesystem_files: int
+    undated_files: int
+    collision_files: int
+    total_bytes: int
+    available_bytes: int
+    has_enough_space: bool

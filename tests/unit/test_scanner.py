@@ -72,3 +72,25 @@ def test_scan_media_files_returns_empty_stats_for_non_media_tree(tmp_path: Path)
     assert result.media_files == ()
     assert result.stats.total_files == 0
     assert result.stats.total_bytes == 0
+
+
+def test_scan_media_files_skips_files_that_fail_stat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    ok_file = source / "ok.jpg"
+    broken_file = source / "broken.jpg"
+    ok_file.write_bytes(b"ok")
+    broken_file.write_bytes(b"broken")
+
+    original_stat = Path.stat
+
+    def fake_stat(self: Path, *args, **kwargs):
+        if self == broken_file:
+            raise OSError("file disappeared")
+        return original_stat(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", fake_stat)
+
+    result = scan_media_files(source)
+
+    assert [item.source_path for item in result.media_files] == [ok_file]

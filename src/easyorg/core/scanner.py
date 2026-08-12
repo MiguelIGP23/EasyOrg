@@ -70,14 +70,21 @@ def scan_media_files(source_directory: Path) -> ScanResult:
 
         for file_name in file_names:
             file_path = root_path / file_name
-            if file_path.is_symlink():
+            try:
+                if file_path.is_symlink():
+                    continue
+            except OSError:
                 continue
 
             media_type = classify_media_file(file_path)
             if media_type is None:
                 continue
 
-            size_bytes = file_path.stat().st_size
+            try:
+                size_bytes = file_path.stat().st_size
+            except OSError:
+                continue
+
             media_files.append(
                 MediaFile(
                     source_path=file_path,

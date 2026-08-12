@@ -78,6 +78,24 @@ python scripts/build_windows.py
 
 El build Windows usa PyInstaller y genera salida en `dist/`.
 
+## GitHub Releases
+
+El repositorio incluye un workflow para publicar el ejecutable de Windows como asset descargable en GitHub Releases.
+
+Flujo previsto:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Cuando se publica un tag con formato `v*`, GitHub Actions:
+
+- ejecuta los tests;
+- construye `easyOrg.exe` en Windows;
+- empaqueta `dist/easyOrg/` en un zip;
+- adjunta ese zip a la Release correspondiente.
+
 ## Seguridad
 
 - nunca modifica metadata interna;

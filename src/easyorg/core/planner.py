@@ -116,13 +116,13 @@ def _resolve_collision(
     reserved_destinations: set[Path],
 ) -> Path:
     candidate = target_directory / original_name
-    if candidate not in reserved_destinations:
+    if candidate not in reserved_destinations and not candidate.exists():
         return candidate
 
     original_path = Path(original_name)
     suffix = 2
     while True:
         candidate = target_directory / f"{original_path.stem}_{suffix}{original_path.suffix}"
-        if candidate not in reserved_destinations:
+        if candidate not in reserved_destinations and not candidate.exists():
             return candidate
         suffix += 1

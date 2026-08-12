@@ -23,26 +23,26 @@ def validate_source_and_destination(
     destination = destination_parent_directory.resolve()
 
     if not source.exists():
-        raise PathValidationError("source directory does not exist")
+        raise PathValidationError("La carpeta de origen no existe.")
     if not source.is_dir():
-        raise PathValidationError("source path must be a directory")
+        raise PathValidationError("La ruta de origen debe ser una carpeta.")
 
     if not destination.exists():
-        raise PathValidationError("destination directory does not exist")
+        raise PathValidationError("La carpeta de destino no existe.")
     if not destination.is_dir():
-        raise PathValidationError("destination path must be a directory")
+        raise PathValidationError("La ruta de destino debe ser una carpeta.")
 
     if source == destination:
-        raise PathValidationError("source and destination cannot be the same directory")
+        raise PathValidationError("La carpeta de origen y la de destino no pueden ser la misma.")
     if _is_relative_to(destination, source):
-        raise PathValidationError("destination cannot be inside source")
+        raise PathValidationError("La carpeta de destino no puede estar dentro de la carpeta de origen.")
     if _is_relative_to(source, destination):
-        raise PathValidationError("source cannot be inside destination")
+        raise PathValidationError("La carpeta de origen no puede estar dentro de la carpeta de destino.")
 
     if not os.access(source, os.R_OK):
-        raise PathValidationError("source directory is not readable")
+        raise PathValidationError("No se puede leer la carpeta de origen.")
     if not os.access(destination, os.W_OK):
-        raise PathValidationError("destination directory is not writable")
+        raise PathValidationError("No se puede escribir en la carpeta de destino.")
 
     return ValidatedPaths(
         source_directory=source,

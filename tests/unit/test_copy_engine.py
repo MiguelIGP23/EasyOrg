@@ -104,6 +104,45 @@ def test_copy_engine_continues_when_one_operation_fails(tmp_path: Path) -> None:
     assert second_destination.read_bytes() == b"second"
 
 
+def test_copy_engine_fails_when_source_disappears_before_copy(tmp_path: Path) -> None:
+    source = tmp_path / "source.jpg"
+    destination = tmp_path / "out" / "source.jpg"
+    source.write_bytes(b"image-bytes")
+    operation = _operation(source, destination)
+    source.unlink()
+
+    result = CopyEngine().copy_operation(operation)
+
+    assert result.success is False
+    assert result.message == "source file does not exist"
+
+
+def test_copy_engine_fails_when_destination_already_exists(tmp_path: Path) -> None:
+    source = tmp_path / "source.jpg"
+    destination = tmp_path / "out" / "source.jpg"
+    source.write_bytes(b"image-bytes")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(b"existing")
+
+    result = CopyEngine().copy_operation(_operation(source, destination))
+
+    assert result.success is False
+    assert result.message == "destination file already exists"
+
+
+def test_copy_engine_fails_when_source_changes_after_analysis(tmp_path: Path) -> None:
+    source = tmp_path / "source.jpg"
+    destination = tmp_path / "out" / "source.jpg"
+    source.write_bytes(b"image-bytes")
+    operation = _operation(source, destination)
+    source.write_bytes(b"changed-image-bytes")
+
+    result = CopyEngine().copy_operation(operation)
+
+    assert result.success is False
+    assert result.message == "source file changed after analysis"
+
+
 def test_validate_copied_file_detects_success(tmp_path: Path) -> None:
     source = tmp_path / "source.jpg"
     destination = tmp_path / "destination.jpg"

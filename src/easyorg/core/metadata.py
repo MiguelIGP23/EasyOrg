@@ -43,6 +43,8 @@ def _extract_creation_date(stat_result: stat_result) -> datetime | None:
 
 
 class ExifToolMetadataReader:
+    MAX_BATCH_SIZE = 200
+    MAX_COMMAND_CHARS = 24000
     PHOTO_FIELDS = (
         "DateTimeOriginal",
         "CreateDate",
@@ -66,7 +68,50 @@ class ExifToolMetadataReader:
         if not file_paths:
             return {}
 
-        command = [
+        records_by_path: dict[Path, MetadataRecord] = {}
+        for batch in self._split_batches(file_paths):
+            payload = self._read_command_payload_with_fallback(batch)
+            records_by_path.update(self._normalize_payload(batch, payload))
+
+        return records_by_path
+
+    def _read_command_payload_with_fallback(self, file_paths: list[Path]) -> list[dict[str, object]]:
+        try:
+            return self._read_command_payload(file_paths)
+        except (OSError, subprocess.CalledProcessError, json.JSONDecodeError):
+            if len(file_paths) == 1:
+                raise
+
+        midpoint = len(file_paths) // 2
+        left_payload = self._read_command_payload_with_fallback(file_paths[:midpoint])
+        right_payload = self._read_command_payload_with_fallback(file_paths[midpoint:])
+        return [*left_payload, *right_payload]
+
+    def _read_command_payload(self, file_paths: list[Path]) -> list[dict[str, object]]:
+        completed = self._run_command(
+            self._build_command(file_paths),
+            check=False,
+            capture_output=True,
+            text=True,
+            **_subprocess_window_kwargs(),
+        )
+
+        if completed.returncode != 0 and not completed.stdout.strip():
+            stderr = completed.stderr.strip()
+            detail = stderr or f"codigo de salida {completed.returncode}"
+            raise RuntimeError(f"ExifTool no pudo leer metadatos: {detail}")
+
+        try:
+            return json.loads(completed.stdout)
+        except json.JSONDecodeError as exc:
+            if completed.returncode != 0:
+                stderr = completed.stderr.strip()
+                detail = stderr or f"codigo de salida {completed.returncode}"
+                raise RuntimeError(f"ExifTool devolvio una respuesta invalida: {detail}") from exc
+            raise
+
+    def _build_command(self, file_paths: list[Path]) -> list[str]:
+        return [
             str(self._exiftool_path),
             "-j",
             "-n",
@@ -76,16 +121,13 @@ class ExifToolMetadataReader:
             "-TrackCreateDate",
             *[str(path) for path in file_paths],
         ]
-        completed = self._run_command(
-            command,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
 
-        payload = json.loads(completed.stdout)
+    def _normalize_payload(
+        self,
+        file_paths: list[Path],
+        payload: list[dict[str, object]],
+    ) -> dict[Path, MetadataRecord]:
         records_by_path: dict[Path, MetadataRecord] = {}
-
         for item in payload:
             source_path = Path(item.get("SourceFile", ""))
             if not source_path:
@@ -114,3 +156,41 @@ class ExifToolMetadataReader:
             )
 
         return records_by_path
+
+    def _split_batches(self, file_paths: list[Path]) -> list[list[Path]]:
+        batches: list[list[Path]] = []
+        current_batch: list[Path] = []
+        current_command_chars = len(" ".join(self._build_command([])))
+
+        for file_path in file_paths:
+            file_path_chars = len(str(file_path)) + 1
+            would_exceed_batch_size = len(current_batch) >= self.MAX_BATCH_SIZE
+            would_exceed_command_chars = current_batch and (
+                current_command_chars + file_path_chars > self.MAX_COMMAND_CHARS
+            )
+
+            if would_exceed_batch_size or would_exceed_command_chars:
+                batches.append(current_batch)
+                current_batch = []
+                current_command_chars = len(" ".join(self._build_command([])))
+
+            current_batch.append(file_path)
+            current_command_chars += file_path_chars
+
+        if current_batch:
+            batches.append(current_batch)
+
+        return batches
+
+
+def _subprocess_window_kwargs() -> dict[str, object]:
+    if not sys.platform.startswith("win"):
+        return {}
+
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = 0
+    return {
+        "creationflags": subprocess.CREATE_NO_WINDOW,
+        "startupinfo": startupinfo,
+    }

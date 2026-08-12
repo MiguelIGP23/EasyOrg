@@ -63,9 +63,10 @@ class EasyOrgService:
         organization_mode: OrganizationMode,
         run_date: date,
         event_emitter: EventEmitter | None = None,
+        dependency_resolution: ExifToolResolution | None = None,
     ) -> AnalysisResult:
         self._emit_message(event_emitter, "[easyOrg] Buscando ExifTool...")
-        dependency = self._exiftool_resolver.resolve()
+        dependency = dependency_resolution or self.resolve_dependency()
         self._emit_message(event_emitter, f"[easyOrg] {dependency.message}")
 
         self._emit_message(event_emitter, "[easyOrg] Validando rutas...")
@@ -124,6 +125,14 @@ class EasyOrgService:
             summary=summary,
         )
 
+    def resolve_dependency(self, allow_install: bool = False) -> ExifToolResolution:
+        resolution = self._exiftool_resolver.resolve()
+        if resolution.requires_confirmation and resolution.executable_path is None:
+            if not allow_install:
+                return resolution
+            return self._exiftool_resolver.install_with_confirmation(consent_granted=True)
+        return resolution
+
     def execute(
         self,
         plan: OrganizationPlan,
@@ -165,6 +174,9 @@ class EasyOrgService:
         self,
         results: tuple[OperationResult, ...],
     ) -> int:
+        if any(not result.success for result in results):
+            return 0
+
         deleted_count = 0
         for result in results:
             if not result.success:

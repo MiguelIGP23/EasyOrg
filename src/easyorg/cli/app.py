@@ -86,6 +86,15 @@ def run_cli(
     )
 
     try:
+        dependency = service.resolve_dependency()
+        if dependency.requires_confirmation and dependency.executable_path is None:
+            confirmation = input_fn("ExifTool no esta disponible. Instalar con apt? [s/N]: ").strip().lower()
+            if confirmation in {"s", "si", "y", "yes"}:
+                dependency = service.resolve_dependency(allow_install=True)
+            else:
+                print("[easyOrg] ExifTool es obligatorio para continuar.", file=stderr)
+                return 1
+
         analysis = service.analyze(
             source_directory=cli_config.source_directory,
             destination_parent_directory=cli_config.destination_parent_directory,
@@ -93,6 +102,7 @@ def run_cli(
             organization_mode=cli_config.organization_mode,
             run_date=current_date,
             event_emitter=event_emitter,
+            dependency_resolution=dependency,
         )
     except Exception as exc:
         print(f"[easyOrg] Error estructural: {exc}", file=stderr)
